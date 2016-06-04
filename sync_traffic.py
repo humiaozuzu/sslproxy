@@ -24,7 +24,7 @@ class TrafficSync(object):
 
     @staticmethod
     def tailf_log():
-        for line in Pygtail(config.SQUID_LOG):
+        for line in Pygtail(config.SQUID_LOG, config.SQUID_LOG_OFFSET):
             _, _, _, code_status, num_bytes, _, _, rfc931, _, _ = line.split()[:10]
 
             # unauthorized user
