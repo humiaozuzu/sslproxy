@@ -25,8 +25,11 @@ class TrafficSync(object):
     @staticmethod
     def tailf_log():
         for line in Pygtail(config.SQUID_LOG, config.SQUID_LOG_OFFSET):
-            _, _, _, code_status, num_bytes, _, _, rfc931, _, _ = line.split()[:10]
-
+            try:
+                _, _, _, code_status, num_bytes, _, _, rfc931, _, _ = line.split()[:10]
+            except ValueError:
+                logging.warn('error parsing line: %s' % line)
+                continue
             # unauthorized user
             if rfc931 == '-': continue
             # wrong username and/or password
