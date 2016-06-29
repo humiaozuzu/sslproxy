@@ -36,7 +36,7 @@ class TrafficSync(object):
             if code_status.split('/')[1] == '407': continue
 
             TrafficSync.statistics[rfc931] += int(num_bytes)
-        print dict(TrafficSync.statistics)
+        logging.info(dict(TrafficSync.statistics))
 
     @staticmethod
     def sync_traffic():

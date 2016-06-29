@@ -28,6 +28,7 @@ from os.path import exists, getsize
 import sys
 import glob
 import gzip
+import logging
 from optparse import OptionParser
 
 __version__ = '0.6.1'
@@ -87,7 +88,7 @@ class Pygtail(object):
                 # Look for the rotated file and process that if we find it.
                 self._rotated_logfile = self._determine_rotated_logfile()
                 if not self._rotated_logfile:
-                    print('rotate file missing or size error, resetting to current log file')
+                    logging.error('rotate file missing or size error, resetting to current log file')
                     self._offset = stat(self.filename).st_size
                     self._update_offset_file()
 
