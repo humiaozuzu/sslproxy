@@ -23,13 +23,15 @@ class UserSync(object):
         # get remote users
         r_conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
                                  passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
-        r_cur = r_conn.cursor()
-        r_cur.execute("SELECT username, u, d, transfer_enable, passwd, switch, ssl_enabled FROM user;")
-        # for r in cur.fetchall():
-        #     rows.append(list(r))
-        r_users = r_cur.fetchall()
-        r_cur.close()
-        r_conn.close()
+        try:
+            r_cur = r_conn.cursor()
+            r_cur.execute("SELECT username, u, d, transfer_enable, passwd, switch, ssl_enabled FROM user;")
+            # for r in cur.fetchall():
+            #     rows.append(list(r))
+            r_users = r_cur.fetchall()
+            r_cur.close()
+        finally:
+            r_conn.close()
         # print r_users
 
         # get local users

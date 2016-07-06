@@ -62,11 +62,13 @@ class TrafficSync(object):
         # print query_sql
         conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
                                passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
-        cur = conn.cursor()
-        cur.execute(query_sql)
-        cur.close()
-        conn.commit()
-        conn.close()
+        try:
+            cur = conn.cursor()
+            cur.execute(query_sql)
+            cur.close()
+            conn.commit()
+        finally:
+            conn.close()
 
     @staticmethod
     def thread_db(conf):
