@@ -25,7 +25,7 @@ class UserSync(object):
                                  passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
         try:
             r_cur = r_conn.cursor()
-            r_cur.execute("SELECT username, u, d, transfer_enable, passwd, switch, ssl_enabled FROM user;")
+            r_cur.execute("SELECT username, u, d, transfer_enable, passwd, ssl_enabled, enable FROM user;")
             # for r in cur.fetchall():
             #     rows.append(list(r))
             r_users = r_cur.fetchall()
