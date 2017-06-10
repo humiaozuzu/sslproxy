@@ -1,11 +1,13 @@
 import sqlite3
-import cymysql
 import sys
 import logging
 import time
 import imp
 import getopt
 import collections
+import urllib2
+import json
+from urllib import urlencode
 from pygtail import Pygtail
 
 config = None
@@ -41,34 +43,19 @@ class TrafficSync(object):
     @staticmethod
     def sync_traffic():
         dt_transfer = TrafficSync.statistics
-        query_head = 'UPDATE user'
-        query_sub_when = ''
-        query_sub_when2 = ''
-        query_sub_in = None
-        last_time = time.time()
-        for id in dt_transfer.keys():
-            query_sub_when += ' WHEN "%s" THEN u+%s' % (id, 0) # all in d
-            query_sub_when2 += ' WHEN "%s" THEN d+%s' % (id, int(dt_transfer[id] * config.TRANSFER_RATIO))
-            if query_sub_in is not None:
-                query_sub_in += ',"%s"' % id
-            else:
-                query_sub_in = '"%s"' % id
-        if query_sub_when == '':
-            return
-        query_sql = query_head + ' SET u = CASE username' + query_sub_when + \
-                    ' END, d = CASE username' + query_sub_when2 + \
-                    ' END, t = ' + str(int(last_time)) + \
-                    ' WHERE username IN (%s)' % query_sub_in
-        # print query_sql
-        conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
-                               passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
-        try:
-            cur = conn.cursor()
-            cur.execute(query_sql)
-            cur.close()
-            conn.commit()
-        finally:
-            conn.close()
+        if dt_transfer:
+            # apply ratio
+            for k in dt_transfer.keys():
+                dt_transfer[k] = config.TRANSFER_RATIO * dt_transfer[k]
+
+            # upload stats
+            payload = {
+                'token': config.SYNC_TOKEN,
+                'uid_data': json.dumps(dt_transfer),
+            }
+            resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/traffic', urlencode(payload))
+            if resp.code != 200:
+                raise RuntimeError(json.load(resp))
 
     @staticmethod
     def thread_db(conf):

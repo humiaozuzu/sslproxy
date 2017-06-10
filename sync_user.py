@@ -1,10 +1,11 @@
 import sqlite3
-import cymysql
 import sys
 import logging
 import time
 import imp
 import getopt
+import urllib2
+import json
 
 config = None
 
@@ -21,18 +22,11 @@ class UserSync(object):
     @staticmethod
     def sync_user():
         # get remote users
-        r_conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
-                                 passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
-        try:
-            r_cur = r_conn.cursor()
-            r_cur.execute("SELECT username, u, d, transfer_enable, passwd, ssl_enabled, enable FROM user;")
-            # for r in cur.fetchall():
-            #     rows.append(list(r))
-            r_users = r_cur.fetchall()
-            r_cur.close()
-        finally:
-            r_conn.close()
-        # print r_users
+        resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/users', "token=%s" % config.SYNC_TOKEN)
+        data = json.load(resp)
+        traffic_ok_users = data['traffic_ok']
+        traffic_exceed_users = data['traffic_exceed']
+        r_usernames = [user[0] for user in traffic_ok_users] + [user[0] for user in traffic_exceed_users]
 
         # get local users
         l_conn = sqlite3.connect(config.LOCAL_DB)
@@ -45,24 +39,26 @@ class UserSync(object):
         # diff
         add_list = []
         del_ids = []
-        for user in r_users:
+        # for traffic ok active users, add or change password
+        for user in traffic_ok_users:
             if user[0] in l_users_dict.keys():
-                # user in local, check stat if need to remove
-                if user[5] == 0 or user[6] == 0:
-                    logging.info('stop user %s as server disabled' % user[0])
-                    del_ids.append(user[0])
-                elif user[1] + user[2] >= user[3]:
-                    logging.info('stop user %s as bandwidth exceeded' % user[0])
-                    del_ids.append(user[0])
-                elif user[4] != l_users_dict[user[0]][1]:
+                if user[2] != l_users_dict[user[0]][1]:
                     logging.info('update user %s as password changed' % user[0])
                     del_ids.append(user[0])
-                    add_list.append((user[0], user[4], 1))
+                    add_list.append((user[0], user[2], 1))
             else:
-                # new user, check if need to add
-                if user[5] == 1 and user[6] == 1 and user[1] + user[2] < user[3]:
-                    logging.info('add user %s' % user[0])
-                    add_list.append((user[0], user[4], 1))
+                logging.info('add user %s' % user[0])
+                add_list.append((user[0], user[2], 1))
+        # for traffic not ok users, disable
+        for user in traffic_exceed_users:
+            if user[0] in l_users_dict.keys():
+                logging.info('stop user %s as bandwidth exceeded' % user[0])
+                del_ids.append(user[0])
+        # for not in users, remove
+        for username in l_users_dict.keys():
+            if username not in r_usernames:
+                logging.info('stop user %s as service disabled or expired' % username)
+                del_ids.append(username)
 
         # sync to local
         if del_ids:
