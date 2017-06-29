@@ -6,6 +6,9 @@ import imp
 import getopt
 import urllib2
 import json
+import gzip
+from StringIO import StringIO
+from raven import Client
 
 config = None
 
@@ -22,8 +25,15 @@ class UserSync(object):
     @staticmethod
     def sync_user():
         # get remote users
-        resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/users', "token=%s" % config.SYNC_TOKEN)
-        data = json.load(resp)
+        req = urllib2.Request(config.SYNC_API_URL + '/v1/sync/users', "token=%s" % config.SYNC_TOKEN)
+        req.add_header('Accept-encoding', 'gzip')
+        resp = urllib2.urlopen(req)
+        if resp.info().get('Content-Encoding') == 'gzip':
+            buf = StringIO(resp.read())
+            f = gzip.GzipFile(fileobj=buf)
+            data = json.load(f)
+        else:
+            data = json.load(resp)
         traffic_ok_users = data['traffic_ok']
         traffic_exceed_users = data['traffic_exceed']
         r_usernames = [user[0] for user in traffic_ok_users] + [user[0] for user in traffic_exceed_users]

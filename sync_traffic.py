@@ -9,6 +9,7 @@ import urllib2
 import json
 from urllib import urlencode
 from pygtail import Pygtail
+from raven import Client
 
 config = None
 
@@ -64,6 +65,8 @@ class TrafficSync(object):
         import socket
         timeout = 30
         socket.setdefaulttimeout(timeout)
+        if config.SENTRY_DSN:
+            client = Client(config.SENTRY_DSN)
         while True:
             logging.info('logtail loop')
             try:
@@ -74,6 +77,8 @@ class TrafficSync(object):
                 import traceback
                 traceback.print_exc()
                 logging.warn('db thread except:%s' % e)
+                if config.SENTRY_DSN:
+                    client.captureException()
             finally:
                 time.sleep(config.TRAFFIC_SYNC_INTERVAL)
 
