@@ -46,13 +46,14 @@ class TrafficSync(object):
         dt_transfer = TrafficSync.statistics
         if dt_transfer:
             # apply ratio
+            ratio_transfer = {}
             for k in dt_transfer.keys():
-                dt_transfer[k] = config.TRANSFER_RATIO * dt_transfer[k]
+                ratio_transfer[k] = config.TRANSFER_RATIO * dt_transfer[k]
 
             # upload stats
             payload = {
                 'token': config.SYNC_TOKEN,
-                'uid_data': json.dumps(dt_transfer),
+                'uid_data': json.dumps(ratio_transfer),
             }
             resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/traffic', urlencode(payload))
             if resp.code != 200:
