@@ -5,11 +5,19 @@ import time
 import imp
 import getopt
 import collections
-import urllib2
 import json
-from urllib import urlencode
 from pygtail import Pygtail
 from raven import Client
+
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    import urllib.request as urllib2
+    from urllib.parse import urlencode
+else:
+    import urllib2
+    from urllib import urlencode
 
 config = None
 
@@ -91,13 +99,13 @@ def main():
     config_path = None
     for o, a in optlist:
         if o in ('-h', '--help'):
-            print 'Usage: sync_traffic.py -c path_to_config.py'
+            print('Usage: sync_traffic.py -c path_to_config.py')
             sys.exit(0)
         elif o in ('-c', '--config'):
             config_path = a
 
     if not config_path:
-        print 'config not specified'
+        print('config not specified')
         sys.exit(2)
 
     config = imp.load_source('config', config_path)

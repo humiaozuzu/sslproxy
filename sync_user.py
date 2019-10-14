@@ -4,13 +4,22 @@ import logging
 import time
 import imp
 import getopt
-import urllib2
 import json
 import gzip
-from StringIO import StringIO
 from raven import Client
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    import urllib.request as urllib2
+    from io import StringIO
+else:
+    import urllib2
+    from StringIO import StringIO
+
 config = None
+
 
 class UserSync(object):
 
@@ -25,7 +34,8 @@ class UserSync(object):
     @staticmethod
     def sync_user():
         # get remote users
-        req = urllib2.Request(config.SYNC_API_URL + '/v1/sync/users', "token=%s" % config.SYNC_TOKEN)
+        params = "token=%s" % config.SYNC_TOKEN
+        req = urllib2.Request(config.SYNC_API_URL + '/v1/sync/users', params.encode("utf-8"))
         req.add_header('Accept-encoding', 'gzip')
         resp = urllib2.urlopen(req)
         if resp.info().get('Content-Encoding') == 'gzip':
@@ -106,13 +116,13 @@ def main():
     config_path = None
     for o, a in optlist:
         if o in ('-h', '--help'):
-            print 'Usage: sync_user.py -c path_to_config.py'
+            print('Usage: sync_user.py -c path_to_config.py')
             sys.exit(0)
         elif o in ('-c', '--config'):
             config_path = a
 
     if not config_path:
-        print 'config not specified'
+        print('config not specified')
         sys.exit(2)
 
     config = imp.load_source('config', config_path)
