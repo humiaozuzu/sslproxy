@@ -63,7 +63,7 @@ class TrafficSync(object):
                 'token': config.SYNC_TOKEN,
                 'uid_data': json.dumps(ratio_transfer),
             }
-            resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/traffic', urlencode(payload))
+            resp = urllib2.urlopen(config.SYNC_API_URL + '/v1/sync/traffic', urlencode(payload).encode("utf-8"))
             if resp.code != 200:
                 raise RuntimeError(json.load(resp))
 
