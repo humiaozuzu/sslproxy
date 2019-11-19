@@ -36,14 +36,11 @@ class UserSync(object):
         req = urllib2.Request(config.SYNC_API_URL + '/v1/sync/users', params.encode("utf-8"))
         req.add_header('Accept-encoding', 'gzip')
         resp = urllib2.urlopen(req)
-        print(resp)
         if resp.info().get('Content-Encoding') == 'gzip':
             data_r = gzip.decompress(resp.read())
             data = json.loads(data_r)
-            print(data, 1)
         else:
             data = json.load(resp)
-            print(data, 2)
         traffic_ok_users = data['traffic_ok']
         traffic_exceed_users = data['traffic_exceed']
         r_usernames = [user[0] for user in traffic_ok_users] + [user[0] for user in traffic_exceed_users]
