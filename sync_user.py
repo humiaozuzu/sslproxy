@@ -6,7 +6,6 @@ import imp
 import getopt
 import json
 import gzip
-from raven import Client
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3

@@ -7,7 +7,8 @@ import getopt
 import collections
 import json
 from pygtail import Pygtail
-from raven import Client
+import sentry_sdk
+from sentry_sdk import capture_exception
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -75,7 +76,7 @@ class TrafficSync(object):
         timeout = 30
         socket.setdefaulttimeout(timeout)
         if config.SENTRY_DSN:
-            client = Client(config.SENTRY_DSN)
+            sentry_sdk.init(dsn=config.SENTRY_DSN)
         while True:
             logging.info('logtail loop')
             try:
@@ -87,7 +88,7 @@ class TrafficSync(object):
                 traceback.print_exc()
                 logging.warn('db thread except:%s' % e)
                 if config.SENTRY_DSN:
-                    client.captureException()
+                    capture_exception()
             finally:
                 time.sleep(config.TRAFFIC_SYNC_INTERVAL)
 
