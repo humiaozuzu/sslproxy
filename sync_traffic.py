@@ -1,4 +1,3 @@
-import sqlite3
 import sys
 import logging
 import time
@@ -6,6 +5,7 @@ import imp
 import getopt
 import collections
 import json
+import traceback
 from pygtail import Pygtail
 import sentry_sdk
 from sentry_sdk import capture_exception
@@ -84,7 +84,8 @@ class TrafficSync(object):
                 TrafficSync.get_instance().sync_traffic()
                 TrafficSync.statistics.clear()
             except Exception as e:
-                import traceback
+                TrafficSync.statistics.clear()
+                logging.warn('Clear traffic statics as Exception occurs')
                 traceback.print_exc()
                 logging.warn('db thread except:%s' % e)
                 if config.SENTRY_DSN:
